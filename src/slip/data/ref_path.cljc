@@ -2,16 +2,18 @@
   (:require
    #?(:clj [clojure.pprint :as pprint])
    [slip.data.protocols :as p]
+   [a-frame.interceptor-chain.data.protocols :as ic.d.p]
    [taoensso.timbre :refer [info warn]]))
 
 ;; don't know why, but cljs compile doesn't agree
-;; with deftype here - probably some badly
-;; documented interaction with the tag-readers
+;; with deftype here - perhaps some
+;; interaction with the tag-readers
 (defrecord RefPath [path]
-  p/IResolveData
-  (-resolve-data [_ sys]
-    (let [data (get-in sys path)]
-      ;; (warn "resolve DataPath" path)
+  ic.d.p/IResolveData
+  (-resolve-data [_spec interceptor-ctx]
+    (let [data (get-in
+                interceptor-ctx
+                (into [:slip/system] path))]
       data))
 
   p/ICollectRefs

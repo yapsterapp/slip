@@ -17,10 +17,10 @@
          `(ref-path ~path)
 
        ;; if we eval the path then we can use var symbols
-       ;; in the path. this will only work on clj
+       ;; in the path - obvs only works on clj
        (ref-path (eval path)))))
 
 #?(:cljs
-   (defn ^:export read-ctx-path
+   (defn ^:export read-ref-path
      [path]
      `(ref-path ~path)))

@@ -1,5 +1,6 @@
 (ns slip.schema
   (:require
+   [malli.util :as mu]
    [slip.data.ref-path :as ref-path]))
 
 (def DataSpec
@@ -17,20 +18,22 @@
 
    ::data-spec])
 
-(def DefaultKeyObjectSpec
-  [:tuple :keyword DataSpec])
-
-(def ExplicitKeyObjectSpec
-  [:tuple :keyword :keyword DataSpec])
-
-(def MapObjectSpec
+(def KeylessObjectSpec
   [:map
-   [:key :keyword]
-   [:factory {:optional true} :keyword]
-   [:data DataSpec]])
+   [:slip/factory {:optional true} :keyword]
+   [:slip/data DataSpec]])
 
-(def SystemObjectSpec
-  [:or MapObjectSpec DefaultKeyObjectSpec ExplicitKeyObjectSpec])
+(def KeyedObjectSpec
+  (mu/merge
+   KeylessObjectSpec
+   [:map
+    [:slip/key :keyword]]))
+
+(def VectorSystemSpec
+  [:vector KeyedObjectSpec])
+
+(def MapSystemSpec
+  [:map-of :keyword KeylessObjectSpec])
 
 (def SystemSpec
-  [:vector SystemObjectSpec])
+  [:or VectorSystemSpec MapSystemSpec])
