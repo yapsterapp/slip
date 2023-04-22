@@ -1,0 +1,8 @@
+{:lint-as
+ {}
+
+ :linters
+ {:unused-namespace {:exclude [taoensso.timbre]}
+
+  :unused-referred-var
+  {:exclude {taoensso.timbre [trace debug info warn error fatal]}}}}

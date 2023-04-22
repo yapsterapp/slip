@@ -1,0 +1,12 @@
+{
+  "name": "com.github.yapsterapp/slip",
+  "version": "0.0.1",
+  "description": "slip",
+  "dependencies": {
+  },
+  "devDependencies": {
+    "shadow-cljs": "^2.22.9"
+  },
+  "scripts": {
+  }
+}
