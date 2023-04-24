@@ -70,7 +70,22 @@
          d :slip/data
          :as _object-spec}]
      (p/let [obj (mm/start (or fk k) d)]
-       (assoc-in ctx [:slip/system k] obj)))})
+       (assoc-in ctx [:slip/system k] obj)))
+
+   ::ic/error
+   (fn [{stack ::ic/stack
+         :as _ctx}
+        err]
+     (let [{{k :slip/key
+             fk :slip/factory
+             d :slip/data
+             :as object-spec} ::ic/enter-data
+            :as start-int-spec} (peek stack)]
+
+       (prn "unwinding" object-spec (type err))
+
+       ;; continue unwinding
+       (throw err)))})
 
 (ic/register-interceptor
  ::start
@@ -87,7 +102,7 @@
 
 (def stop-object-interceptor
   "an interceptor to stop an object"
-  {::ic/name ::start
+  {::ic/name ::stop
    ::ic/leave
    (fn [{:as ctx}
         {k :slip/key
