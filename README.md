@@ -1,10 +1,10 @@
 # slip
 
-[clip](https://github.com/juxt/clip)'s lazy younger sibling
+[clip](https://github.com/juxt/clip)'s one-trick cousin
 
 slip is a Clojure+Script micro-library which transforms an object system
 specification into an [a-frame](https://github.com/yapsterapp/a-frame)
-data-driven interceptor-chain and runs that interceptor chain for fun and profit
+data-driven interceptor-chain and runs that interceptor-chain for fun and profit
 
 ## system specification
 
