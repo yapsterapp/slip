@@ -9,7 +9,7 @@
    [slip.schema :as s]
    [slip.multimethods :as mm]))
 
-(defn normalise-obj-spec
+(defn ^:private normalise-obj-spec
   "normalize to a KeyedObjectSpec with
    explicit :slip/factory key"
   [k obj-spec]
@@ -17,7 +17,7 @@
     (assoc obj-spec :slip/key k)
     obj-spec))
 
-(defn top-level-refs
+(defn ^:private top-level-refs
   [dspec]
   (let [refs (refs/collect-refs dspec)]
     (->> refs
@@ -107,5 +107,5 @@
   [sys :- s/VectorSystemSpec]
   (let [interceptors (for [object-spec sys]
                        {::ic/key ::stop
-                        ::ic/enter-data object-spec})]
+                        ::ic/leave-data object-spec})]
     (ic/initiate* interceptors)))
