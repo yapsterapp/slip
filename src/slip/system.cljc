@@ -3,6 +3,7 @@
    [malli.experimental :as mx]
    [promesa.core :as p]
    [a-frame.interceptor-chain :as ic]
+   [a-frame.interceptor-chain.schema :as ic.schema]
    [slip.kahn :as kahn]
    [slip.data.ref-path :as ref-path]
    [slip.data.refs :as refs]
@@ -27,27 +28,27 @@
 
 (mx/defn topo-sort-system :- s/VectorSystemSpec
   "given a system-spec returns the system-spec
-   topo-sorted by ref dependencies"
-  [sys :- s/SystemSpec]
+   topo-sorted by ref dependencies - no deps first"
+  [sys-spec :- s/SystemSpec]
 
-  (let [sys (into
-             []
-             (for [obj-spec sys]
-               (if (map-entry? obj-spec)
-                 (let [[k s] obj-spec]
-                   (normalise-obj-spec k s))
-                 (normalise-obj-spec nil obj-spec))))
+  (let [sys-spec (into
+                  []
+                  (for [obj-spec sys-spec]
+                    (if (map-entry? obj-spec)
+                      (let [[k s] obj-spec]
+                        (normalise-obj-spec k s))
+                      (normalise-obj-spec nil obj-spec))))
 
         sys-map (into
                  {}
-                 (for [{k :slip/key :as obj-spec} sys]
+                 (for [{k :slip/key :as obj-spec} sys-spec]
                    [k obj-spec]))
 
         k-deps (into
                 {}
                 (for [{k :slip/key
                        dspec :slip/data
-                       :as _obj-spec} sys]
+                       :as _obj-spec} sys-spec]
                   [k (top-level-refs dspec)]))
 
         _ (prn k-deps)
@@ -59,11 +60,8 @@
      (for [k (reverse sorted-keys)]
        (get sys-map k)))))
 
-;; can i create an interceptor chain where
-;; the ::enter fn is a start, and the object-spec
-;; is provided as enter-data
-
 (def start-object-interceptor
+  "an interceptor to start an object"
   {::ic/name ::start
    ::ic/enter
    (fn [{:as ctx}
@@ -78,8 +76,9 @@
  ::start
  start-object-interceptor)
 
-(mx/defn start-interceptor-chain :- ic/InterceptorContext
-  "return an InterceptorContext for starting the system"
+(mx/defn start-interceptor-chain :- ic.schema/InterceptorContext
+  "return an [[a-frame.interceptor-chain.schema/InterceptorContext]]
+   for starting a system"
   [sys :- s/VectorSystemSpec]
   (let [interceptors (for [object-spec sys]
                        {::ic/key ::start
@@ -87,6 +86,7 @@
     (ic/initiate* interceptors)))
 
 (def stop-object-interceptor
+  "an interceptor to stop an object"
   {::ic/name ::start
    ::ic/leave
    (fn [{:as ctx}
@@ -102,10 +102,11 @@
  ::stop
  stop-object-interceptor)
 
-(mx/defn stop-interceptor-chain :- ic/InterceptorContext
-  "return an InterceptorContext for stopping the system"
-  [sys :- s/VectorSystemSpec]
-  (let [interceptors (for [object-spec sys]
+(mx/defn stop-interceptor-chain :- ic.schema/InterceptorContext
+  "return an [[a-frame.interceptor-chain.schema/InterceptorContext]]
+   for stopping a system"
+  [sys-spec :- s/VectorSystemSpec]
+  (let [interceptors (for [object-spec sys-spec]
                        {::ic/key ::stop
                         ::ic/leave-data object-spec})]
     (ic/initiate* interceptors)))

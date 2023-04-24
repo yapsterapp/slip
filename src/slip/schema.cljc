@@ -1,6 +1,7 @@
 (ns slip.schema
   (:require
    [malli.util :as mu]
+
    [slip.data.ref-path :as ref-path]))
 
 (def DataSpec
