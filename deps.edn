@@ -1,5 +1,5 @@
 {:paths ["src"]
- :deps {com.github.yapsterapp/a-frame {:mvn/version "3.0.26-alpha1"}
+ :deps {com.github.yapsterapp/a-frame {:mvn/version "3.0.32-alpha1"}
 
         metosin/malli {:mvn/version "0.10.0"}}
 
