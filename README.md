@@ -4,7 +4,9 @@
 
 slip is a Clojure+Script micro-library which builds a system of objects.
 It transforms a system specification into a data-driven [interceptor-chain](https://github.com/yapsterapp/a-frame/blob/trunk/src/a_frame/interceptor_chain.cljc)
-and runs that interceptor-chain to create a system map.
+and runs that interceptor-chain to create a system map. Errors during 
+construction of the system map cause the operation to be unwound gracefully,
+and objects to be destroyed.
 
 ## system specification
 
