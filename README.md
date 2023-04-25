@@ -18,7 +18,8 @@ A `SystemSpec` is a collection of `ObjectSpec`s, and each `ObjectSpec` must
 povide:
 
 - `:slip/key` - `<object-key>` in the system map
-- `:slip/factory` - optional `<factory-key>` - defaults to `<object-key>`
+- `:slip/factory` - optional `<factory-key>` - identifies the lifecycle method 
+    for creating and destroying the object. Defaults to `<object-key>`
 - `:slip/data` - lifecycle `DataSpec` - a template specifying how to construct a
    data parameter for the factory method. It supports keyword-maps, vectors,
    references to other system objects and literal values.
@@ -106,3 +107,25 @@ app ;; => {:config {:foo 100, :bar 200},
     ;;     :bar {:foo 100, :bar-cfg 200}}
 
 ```
+
+## ClojureScript
+
+It's common for JavaScript object factories to return a Promise of their result.
+Slip is fully Promise compatible - the interceptor chain is promise-based and
+any of the lifecycle fns can return a promise of their result, as the above 
+example demonstrates. 
+
+## debugging
+
+See what happened during construction of your system by providing a 
+`:slip/debug?` option to `start`
+
+``` clojure
+(def app @(slip/start 
+           sys
+           {:config {:foo 100 :bar 200}}
+           {:slip/debug? true}))
+```
+
+your system will get a `:slip/log` key with a detailed breakdown of the
+interceptor fns called, with what data and what outcome.
