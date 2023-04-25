@@ -1,6 +1,6 @@
 # slip
 
-[clip](https://github.com/juxt/clip)'s degenerate one-trick cousin.
+like [clip](https://github.com/juxt/clip)'s degenerate one-trick cousin.
 
 slip is a Clojure+Script micro-library which builds a system of objects.
 It transforms a system specification into a data-driven [interceptor-chain](https://github.com/yapsterapp/a-frame/blob/trunk/src/a_frame/interceptor_chain.cljc)
