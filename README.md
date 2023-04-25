@@ -1,5 +1,9 @@
 # slip
 
+[![Build Status](https://github.com/yapsterapp/slip/actions/workflows/clojure.yml/badge.svg)](https://github.com/yapsterapp/slip/actions)
+[![Clojars Project](https://img.shields.io/clojars/v/com.github.yapsterapp/slip.svg)](https://clojars.org/com.github.yapsterapp/slip)
+[![cljdoc badge](https://cljdoc.org/badge/com.github.yapsterapp/slip)](https://cljdoc.org/d/com.github.yapsterapp/slip)
+
 like [clip](https://github.com/juxt/clip)'s degenerate one-trick cousin.
 
 slip is a Clojure+Script micro-library which builds a system of objects.
