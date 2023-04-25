@@ -51,9 +51,9 @@
                        :as _obj-spec} sys-spec]
                   [k (top-level-refs dspec)]))
 
-        _ (prn k-deps)
-
         sorted-keys (kahn/kahn-sort k-deps)]
+
+    ;; (prn "topo-sort-system" k-deps sorted-keys)
 
     (into
      []
@@ -76,16 +76,16 @@
    (fn [{stack ::ic/stack
          :as _ctx}
         err]
-     (let [{{k :slip/key
-             fk :slip/factory
-             d :slip/data
+     (let [{{_k :slip/key
+             _fk :slip/factory
+             _d :slip/data
              :as object-spec} ::ic/enter-data
-            :as start-int-spec} (peek stack)]
+            :as _start-int-spec} (peek stack)]
 
        (prn "unwinding" object-spec (type err))
 
        ;; continue unwinding
-       (throw err)))})
+       (throw (ic/rethrow err))))})
 
 (ic/register-interceptor
  ::start
@@ -103,6 +103,7 @@
 (def stop-object-interceptor
   "an interceptor to stop an object"
   {::ic/name ::stop
+
    ::ic/leave
    (fn [{:as ctx}
         {k :slip/key
@@ -111,7 +112,19 @@
          :as _object-spec}]
      (p/let [obj (get-in ctx [:slip/system k])
              _ (mm/stop (or fk k) d obj)]
-       (update-in ctx [:slip/system] dissoc k)))})
+       (update-in ctx [:slip/system] dissoc k)))
+
+   ::ic/error
+   (fn [{stack ::ic/stack
+         :as _ctx}
+        err]
+     (let [{{_k :slip/key
+             _fk :slip/factory
+             _d :slip/data
+             :as object-spec} ::ic/enter-data
+            :as _start-int-spec} (peek stack)]
+
+       (prn "error stopping" object-spec err)))})
 
 (ic/register-interceptor
  ::stop
