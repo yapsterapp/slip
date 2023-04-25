@@ -16,7 +16,7 @@
    (start sys-spec {} nil))
   ([sys-spec init]
    (start sys-spec init nil))
-  ([sys-spec init {:keys [debug?]}]
+  ([sys-spec init {:keys [:slip/debug?]}]
    (p/let [sorted-sys-spec (system/topo-sort-system sys-spec)
            start-intc (system/start-interceptor-chain sorted-sys-spec)
            stop-intc (system/stop-interceptor-chain sorted-sys-spec)
@@ -44,7 +44,7 @@
   ([{start-intc ::start
      stop-intc ::stop
      :as sys}
-    {:keys [debug?]}]
+    {:keys [:slip/debug?]}]
 
    (when (nil? stop-intc)
      (throw
