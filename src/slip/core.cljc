@@ -21,30 +21,45 @@
            start-intc (system/start-interceptor-chain sorted-sys-spec)
            stop-intc (system/stop-interceptor-chain sorted-sys-spec)
 
-           ;; add the start and stop chains to the system init
-           ;; for later reference
-           init (-> (or init {})
-                    (assoc ::start start-intc)
-                    (assoc ::stop stop-intc))
+           init (-> (or init {}))
+
+           start-intc (assoc start-intc :slip/system init)
 
            {history ::ic/history
-            :as outc} (ic/execute*
-                       (assoc start-intc :slip/system init))]
+            :as r} (ic/execute* start-intc)
 
-     (cond-> (get-in outc [:slip/system])
+           sys (get-in r [:slip/system])]
+
+     ;; add the start and stop chains and an optional
+     ;; debug log to the system for later reference
+     (cond-> sys
+       true (assoc ::start start-intc)
+       true (assoc ::stop stop-intc)
        debug? (assoc :slip/log history)))))
 
 (defn stop
   "stop a system
   - `sys` - a system started with [[start]]"
-  [{stop-intc ::stop
-    :as sys}]
+  ([sys] (stop sys {}))
+  ([{start-intc ::start
+     stop-intc ::stop
+     :as sys}
+    {:keys [debug?]}]
 
-  (when (nil? stop-intc)
-    (throw
-     (ex-info "no ::stop chain in system" {:system sys})))
+   (when (nil? stop-intc)
+     (throw
+      (ex-info "no ::stop chain in system" {:system sys})))
 
-  (p/let [outc (ic/execute*
-                (assoc stop-intc :slip/system sys))]
+   (p/let [stop-intc+sys (assoc stop-intc
+                                :slip/system
+                                (dissoc sys ::start ::stop :slip/log))
 
-    (get-in outc [:slip/system])))
+           {history ::ic/history
+            :as r} (ic/execute* stop-intc+sys)
+
+           out-sys (get-in r [:slip/system])]
+
+     (cond-> out-sys
+       true (assoc ::start start-intc)
+       true (assoc ::stop stop-intc)
+       debug? (assoc :slip/log history)))))
