@@ -75,6 +75,7 @@ be met.
 ## Example
 
 ``` clojure
+(require '[promesa.core :as p])
 (require '[slip.multimethods :as mm])
 (require '[slip.core :as slip])
 
@@ -86,18 +87,20 @@ be met.
 
 (defmethod mm/start :foo
   [k d]
-  d)
+  (p/delay 500 d))
 
 (defmethod mm/start :barfac
   [k {f :f
       cfg :cfg
       :as d}]
-  {:foo f :bar-cfg cfg})
+  (p/delay
+    {:foo f 
+     :bar-cfg cfg}))
 
 (def app @(slip/start sys {:config {:foo 100 :bar 200}}))
 
 app ;; => {:config {:foo 100, :bar 200},
-           :foo 100,
-           :bar {:foo 100, :bar-cfg 200}}
+    ;;     :foo 100,
+    ;;     :bar {:foo 100, :bar-cfg 200}}
 
 ```
