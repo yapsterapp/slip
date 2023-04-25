@@ -68,11 +68,10 @@ The lifecycle method signatures are:
 ```
 
 `<data>` is provided to lifecycle methods according to the `:slip/data`
-`DataSpec` from the `ObjectSpec` - the `DataSpec` template will be expanded
-with any `#slip.system/ref` references replaced with their value from the
-under-construction system map. Slip identifies object dependencies and will
-and start/stop objects in such an order such that all their dependencies can
-be met.
+`DataSpec` template from the `ObjectSpec` - the `DataSpec` template will be 
+expanded with any `#slip.system/ref` references replaced with their value from 
+the under-construction system map. Slip identifies object dependencies and will
+start/stop objects in such an order such that all their dependencies can be met.
 
 ## Example
 
@@ -89,13 +88,14 @@ be met.
 
 (defmethod mm/start :foo
   [k d]
-  (p/delay 500 d))
+  (p/delay 100 d))
 
 (defmethod mm/start :barfac
   [k {f :f
       cfg :cfg
       :as d}]
   (p/delay
+    100
     {:foo f 
      :bar-cfg cfg}))
 
