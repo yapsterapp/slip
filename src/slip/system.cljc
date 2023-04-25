@@ -51,13 +51,15 @@
                        :as _obj-spec} sys-spec]
                   [k (top-level-refs dspec)]))
 
-        sorted-keys (kahn/kahn-sort k-deps)]
+        sorted-keys (->> k-deps
+                         (kahn/kahn-sort)
+                         reverse)]
 
     ;; (prn "topo-sort-system" k-deps sorted-keys)
 
-    (into
-     []
-     (for [k (reverse sorted-keys)]
+    (filterv
+     some? ;; assuming bad refs will be resolved from config/init
+     (for [k sorted-keys]
        (get sys-map k)))))
 
 (def start-object-interceptor
@@ -69,6 +71,9 @@
          fk :slip/factory
          d :slip/data
          :as _object-spec}]
+
+     ;; (prn "start" _object-spec ctx)
+
      (p/let [obj (mm/start (or fk k) d)]
        (assoc-in ctx [:slip/system k] obj)))
 

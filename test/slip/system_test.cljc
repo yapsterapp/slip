@@ -7,22 +7,48 @@
    [slip.system :as sut]))
 
 (defmethod slip.mm/start :foofoo
-  [_ _data]
+  [k d]
+  (prn k d)
   ::foofoo)
 
+(defmethod slip.mm/stop :foofoo
+  [k d o]
+  (prn k d o))
+
 (defmethod slip.mm/start :bar
-  [_ data]
-  (assoc data :bar ::bar))
+  [k d]
+  (prn k d)
+  (assoc d :bar ::bar))
+
+(defmethod slip.mm/stop :bar
+  [k d o]
+  (prn k d o))
+
+(defmethod slip.mm/start :baz
+  [k {b :b :as d}]
+  (prn k d)
+  ;; (throw (ex-info "boo" {}))
+  {:b b
+   :baz 100}
+  )
+
+(defmethod slip.mm/stop :baz
+  [k d o]
+  (prn k d o))
 
 (deftest simple-system
-  (p/let [sys [{:slip/key :foo, :slip/factory :foofoo, :slip/data {}}
-               {:slip/key :bar, :slip/data {:f #slip.system/ref [:foo]}}]
+  (p/let [sys-spec [{:slip/key :foo, :slip/factory :foofoo, :slip/data {}}
+                    {:slip/key :bar, :slip/data {:f #slip.system/ref [:foo]}}
+                    {:slip/key :baz  :slip/data {:b #slip.system/ref :bar}}]
 
           start-intc (sut/start-interceptor-chain
-                      (sut/topo-sort-system sys))
+                      (sut/topo-sort-system sys-spec))
 
-          out (intc/execute* start-intc)]
+          out-ctx (intc/execute* start-intc)
 
-    (is (nil? out))
-    )
-  )
+          sys (get-in out-ctx [:slip/system])]
+
+    (is (= {:foo ::foofoo
+            :bar {:f ::foofoo :bar ::bar}
+            :baz {:b {:f ::foofoo :bar ::bar} :baz 100}}
+           sys))))
