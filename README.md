@@ -6,18 +6,34 @@
 
 A bit like [clip](https://github.com/juxt/clip)'s degenerate one-trick cousin.
 
-slip is a Clojure+Script micro-library which builds a system of objects.
+slip is a Clojure+Script IOC micro-library which builds a system of objects.
 It transforms a pure-data system specification into a pure-data [interceptor-chain](https://github.com/yapsterapp/a-frame/blob/trunk/src/a_frame/interceptor_chain.cljc)
 description and then runs that interceptor-chain to create a system map.
 Errors during
 construction of the system map cause the operation to be unwound gracefully,
 avoiding leaving objects in unknown state.
 
-## system specification
+## why?
+
+There are a few IOC libs around for Clojure and ClojureScript - 
+[Component](https://github.com/stuartsierra/component), 
+[Mount](https://github.com/tolitius/mount), 
+[Integrant](https://github.com/weavejester/integrant) and
+[Clip](https://github.com/juxt/clip). See Clip's README for a detailed 
+comparison of the features of these libs.
+
+Only Clip attempts to dealing with asynchronous
+(i.e. promise returning) factory functions. 
+Slip takes a similar approach to Clip and deals well with asynchronous
+factories, but it uses a different extension mechanism, avoiding the 
+code-as-data difficulties on ClojureScript (and making other trade-offs 
+in the process).
+
+## The system specification
 
 A system map will have keyword keys and is built according to a
 `SystemSpec`, which is governed by a
-[Malli schema](https://cljdoc.org/d/yapsterapp/slip/CURRENT/api/slip.schema).
+[Malli schema](https://github.com/yapsterapp/slip/blob/trunk/src/slip/schema.cljc).
 
 A `SystemSpec` is a collection of `ObjectSpec`s. An `ObjectSpec` describes
 how to create and destroy an object in a system map. Each `ObjectSpec` provides:
@@ -141,7 +157,7 @@ providing a`:slip/debug?` option to `start`
 
 your system will get a `:slip/log` key with a detailed breakdown of the
 interceptor fns called, with what data and what outcome. Here's the log for 
-the example above - each log entry has 
+the example above - each log entry has:
 [`ObjectSpec` `<interceptor-fn>` `<interceptor-action>` `<data>` `<outcome>`]
 
 ``` clojure
