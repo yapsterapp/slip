@@ -64,7 +64,7 @@
 #?(:clj
    (defn print-ref-path
      [ref-path ^java.io.Writer w]
-     (.write w "#slip.system/ref ")
+     (.write w "#slip/ref ")
      (print-method (p/-path ref-path) w)))
 
 #?(:clj
@@ -85,4 +85,4 @@
    (extend-protocol IPrintWithWriter
      RefPath
      (-pr-writer [ref-path writer _]
-       (write-all writer "#slip.system/ref " (p/-path ref-path) ""))))
+       (write-all writer "#slip/ref " (p/-path ref-path) ""))))

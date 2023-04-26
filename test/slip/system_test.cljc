@@ -8,25 +8,21 @@
 
 (defmethod slip.mm/start :foofoo
   [k d]
-  (prn k d)
   ::foofoo)
 
 (defmethod slip.mm/stop :foofoo
-  [k d o]
-  (prn k d o))
+  [k d o])
 
 (defmethod slip.mm/start :bar
   [k d]
-  (prn k d)
   (assoc d :bar ::bar))
 
 (defmethod slip.mm/stop :bar
   [k d o]
-  (prn k d o))
+  )
 
 (defmethod slip.mm/start :baz
   [k {b :b :as d}]
-  (prn k d)
   ;; (throw (ex-info "boo" {}))
   {:b b
    :baz 100}
@@ -34,12 +30,12 @@
 
 (defmethod slip.mm/stop :baz
   [k d o]
-  (prn k d o))
+  )
 
 (deftest simple-system
   (p/let [sys-spec [{:slip/key :foo, :slip/factory :foofoo, :slip/data {}}
-                    {:slip/key :bar, :slip/data {:f #slip.system/ref [:foo]}}
-                    {:slip/key :baz  :slip/data {:b #slip.system/ref :bar}}]
+                    {:slip/key :bar, :slip/data {:f #slip/ref [:foo]}}
+                    {:slip/key :baz  :slip/data {:b #slip/ref :bar}}]
 
           start-intc (sut/start-interceptor-chain
                       (sut/topo-sort-system sys-spec))

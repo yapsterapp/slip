@@ -8,63 +8,64 @@ A bit like [clip](https://github.com/juxt/clip)'s degenerate one-trick cousin.
 
 slip is a Clojure+Script IOC micro-library which builds a system of objects.
 It transforms a pure-data system specification into a pure-data [interceptor-chain](https://github.com/yapsterapp/a-frame/blob/trunk/src/a_frame/interceptor_chain.cljc)
-description and then runs that interceptor-chain to create a system map.
-Errors during
-construction of the system map cause the operation to be unwound gracefully,
-avoiding leaving objects in unknown state.
+description and then runs an asynchronous interceptor-chain to create a system 
+map.
+Errors during construction of the system map cause the operation to be 
+unwound gracefully, avoiding leaving any objects in unknown states.
 
 ## why?
 
-There are a few IOC libs around for Clojure and ClojureScript - 
-[Component](https://github.com/stuartsierra/component), 
-[Mount](https://github.com/tolitius/mount), 
+There are a few IOC libs around for Clojure and ClojureScript -
+[Component](https://github.com/stuartsierra/component),
+[Mount](https://github.com/tolitius/mount),
 [Integrant](https://github.com/weavejester/integrant) and
-[Clip](https://github.com/juxt/clip). See Clip's README for a detailed 
+[Clip](https://github.com/juxt/clip). See Clip's README for a detailed
 comparison of the features of these libs.
 
-Only Clip attempts to dealing with asynchronous
-(i.e. promise returning) factory functions. 
+Only Clip attempts to deal with asynchronous
+(i.e. promise returning) factory functions.
 Slip takes a similar approach to Clip and deals well with asynchronous
-factories, but it uses a different extension mechanism, avoiding the 
-code-as-data difficulties on ClojureScript (and making other trade-offs 
-in the process).
+factories, but it uses a different extension mechanism - avoiding
+code-as-data difficulties on ClojureScript, but making other trade-offs
+in the process.
 
 ## The system specification
 
-A system map will have keyword keys and is built according to a
-`SystemSpec`, which is governed by a
+Slip builds system maps. A system map will have keyword keys and is
+built according to a system specification - a `SystemSpec`, which is governed
+by a
 [Malli schema](https://github.com/yapsterapp/slip/blob/trunk/src/slip/schema.cljc).
 
 A `SystemSpec` is a collection of `ObjectSpec`s. An `ObjectSpec` describes
-how to create and destroy an object in a system map. Each `ObjectSpec` provides:
+how to create and destroy an individual object in a system map. 
+Each `ObjectSpec` provides:
 
 - `:slip/key` - the `<object-key>` - a keyword key for the object in the
    system map
 - `:slip/factory` - optional `<factory-key>` keyword - identifies a lifecycle
     method for creating and destroying the object. Defaults to `<object-key>`
-- `:slip/data` - lifecycle method `DataSpec` - a template specifying how
-   to build the data parameter for a lifecycle method.
-   It supports keyword-maps, vectors,
+- `:slip/data` - a `DataSpec` template for data provided to lifecycle methods
+   - the templates supports keyword-maps, vectors,
    references to other system objects and literal values.
 
 A `SystemSpec` can be given in map form, with implicit `:slip/key`s:
 
 ``` clojure
-{:foo {:slip/data #slip.system/ref [:config :foo]}
+{:foo {:slip/data #slip/ref [:config :foo]}
  :bar {:slip/factory :barfac
-       :slip/data {:f #slip.system/ref :foo
-                   :cfg #slip.system/ref [:config :bar]}}}
+       :slip/data {:f #slip/ref :foo
+                   :cfg #slip/ref [:config :bar]}}}
 ```
 
 or, equivalently, a system can be specified in a vector form with explicit
 `:slip/key`s:
 
 ``` clojure
-[{:slip/key :foo :slip/data #slip.system/ref [:config :foo]}
+[{:slip/key :foo :slip/data #slip/ref [:config :foo]}
  {:slip/key :bar
   :slip/factory :barfac
-  :slip/data {:f #slip.system/ref :foo
-              :cfg #slip.system/ref [:config :bar]}}]
+  :slip/data {:f #slip/ref :foo
+              :cfg #slip/ref [:config :bar]}}]
 ```
 
 ## lifecycle methods
@@ -72,35 +73,43 @@ or, equivalently, a system can be specified in a vector form with explicit
 Objects in a system map are created and destroyed by the factory lifecycle
 methods. There are two lifecycle methods, `start` and `stop`, and method
 dispatch is on an `ObjectSpec`s `<factory-key>`
-(which defaults to the `<object-key>`).
+(which defaults to the `<object-key>`). The lifecycle method implementations
+should either return constructed objects directly, or return a promise of 
+the constructed object.
 
 For a given `<factory-key>`, a `start` method is
 required, but a `stop `method is optional (so need not be provided when no
 resource cleanup is necessary).
 
 The lifecycle method signatures are:
+
 ``` clojure
 (defmulti start (fn [<factory-key> <data>]))
 (defmulti stop (fn [<factory-key> <data> <object>]))
 ```
 
+and an application should provide implementations of these methods for each type
+of object to be managed. 
+
 ### lifecycle method data and system refs
 
 The `<data>` parameter for lifecycle methods is built according
-to the `:slip/data` `DataSpec` template from an `ObjectSpec`.
+to the `:slip/data` 
+[`DataSpec`](https://github.com/yapsterapp/slip/blob/trunk/src/slip/schema.cljc)
+template from an `ObjectSpec`.
 
-`DataSpec` templates are expanded with any `#slip.system/ref` references
+`DataSpec` templates are expanded with any `#slip/ref` references
 replaced with the value referred to from
-the (under-construction) system map - thus a DAG of objects can 
-be created. 
+the (under-construction) system map - thus a DAG of objects can
+be created.
 
 Slip identifies object dependencies and
-will `start`/`stop` objects in such an order such that all their dependencies
+will `start`/`stop` objects in such an order that all dependencies
 can be met.
 
 If a reference points to a `nil` location in the
 system map then an error will be thrown. If `nil` is a valid value
-for the ref then using a `#slip.system/ref?` will not cause an error.
+for the reference then using a `#slip/ref?` will not cause an error.
 
 ## Example
 
@@ -110,10 +119,10 @@ for the ref then using a `#slip.system/ref?` will not cause an error.
 (require '[slip.core :as slip])
 
 (def sys
- {:foo {:slip/data #slip.system/ref [:config :foo]}
+ {:foo {:slip/data #slip/ref [:config :foo]}
   :bar {:slip/factory :barfac
-        :slip/data {:f #slip.system/ref :foo
-                    :cfg #slip.system/ref [:config :bar]}}})
+        :slip/data {:f #slip/ref :foo
+                    :cfg #slip/ref [:config :bar]}}})
 
 (defmethod mm/start :foo
   [k d]
@@ -145,7 +154,7 @@ example demonstrates.
 
 ## debugging
 
-You can see exactly what happened during construction of your system by 
+You can see exactly what happened during construction of your system by
 providing a`:slip/debug?` option to `start`
 
 ``` clojure
@@ -156,47 +165,47 @@ providing a`:slip/debug?` option to `start`
 ```
 
 your system will get a `:slip/log` key with a detailed breakdown of the
-interceptor fns called, with what data and what outcome. Here's the log for 
+interceptor fns called, with what data and what outcome. Here's the log for
 the example above - each log entry has:
 [`ObjectSpec` `<interceptor-fn>` `<interceptor-action>` `<data>` `<outcome>`]
 
 ``` clojure
 [[#:a-frame.interceptor-chain{:key :slip.system/start,
                               :enter-data
-                              #:slip{:data #slip.system/ref [:config :foo],
+                              #:slip{:data #slip/ref [:config :foo],
                                      :key :foo}}
   :a-frame.interceptor-chain/enter
   :a-frame.interceptor-chain/execute
   #:slip{:data 100, :key :foo}
   :a-frame.interceptor-chain/success]
-  
+
  [#:a-frame.interceptor-chain{:key :slip.system/start,
                               :enter-data
                               #:slip{:factory :barfac,
                                      :data
-                                     {:f #slip.system/ref [:foo],
-                                      :cfg #slip.system/ref [:config :bar]},
+                                     {:f #slip/ref [:foo],
+                                      :cfg #slip/ref [:config :bar]},
                                      :key :bar}}
   :a-frame.interceptor-chain/enter
   :a-frame.interceptor-chain/execute
   #:slip{:factory :barfac, :data {:f 100, :cfg 200}, :key :bar}
   :a-frame.interceptor-chain/success]
-  
+
  [#:a-frame.interceptor-chain{:key :slip.system/start,
                               :enter-data
                               #:slip{:factory :barfac,
                                      :data
-                                     {:f #slip.system/ref [:foo],
-                                      :cfg #slip.system/ref [:config :bar]},
+                                     {:f #slip/ref [:foo],
+                                      :cfg #slip/ref [:config :bar]},
                                      :key :bar}}
   :a-frame.interceptor-chain/leave
   :a-frame.interceptor-chain/noop
   :_
   :a-frame.interceptor-chain/success]
-  
+
  [#:a-frame.interceptor-chain{:key :slip.system/start,
                               :enter-data
-                              #:slip{:data #slip.system/ref [:config :foo],
+                              #:slip{:data #slip/ref [:config :foo],
                                      :key :foo}}
   :a-frame.interceptor-chain/leave
   :a-frame.interceptor-chain/noop
@@ -204,3 +213,7 @@ the example above - each log entry has:
   :a-frame.interceptor-chain/success]]
 ```
 
+Should there be an error during system construction you won't get 
+the system map back directly - instead you will get an errored 
+promise, with `ex-data` with a `::context` key - which will contain 
+the interceptor chain context, which has the log.

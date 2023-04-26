@@ -7,11 +7,11 @@
 (defn start
   "start a system
 
-   - `sys-spec` - the [[slip.system.schema/SystemSpec]]
+   - `sys-spec` - the [[slip.schema/SystemSpec]]
    - `init` - map of initial data for the system - can be referenced
              from the `sys-spec`
-   - `debug?` - add `:slip/log` key to the returned system with details
-      of the interceptors called and the data passed to them"
+   - `:slip/debug?` - add a `:slip/log` key to the returned system with details
+      of the interceptor fns called and the data passed to them"
   ([sys-spec]
    (start sys-spec {} nil))
   ([sys-spec init]

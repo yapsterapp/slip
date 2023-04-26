@@ -1,18 +1,17 @@
 (ns slip.schema
   (:require
    [malli.util :as mu]
-
    [slip.data.ref-path :as ref-path]))
 
 (def DataSpec
   "a recursive schema specifying a template for building data parameters
    for factory methods, allowing references to already created objects
-   with `#slip.system/ref` tagged literals
+   with `#slip/ref` tagged literals
 
-   `::ref-path-spec` - a `RefPath` e.g. from a #slip.system/ref tagged literal
-   `::map-data-spec` - a `{<keyword> <DataSpec>}` map
-   `::vector-data-spec` - a `[<DataSpec>]`
-   <anything-else> - a literal value"
+   - `::ref-path-spec` - a `RefPath` e.g. from a #slip/ref tagged literal
+   - `::map-data-spec` - a `{<keyword> <DataSpec>}` map
+   - `::vector-data-spec` - a `[<DataSpec>]`
+   - `<anything-else>` - a literal value"
 
   [:schema
    {:registry

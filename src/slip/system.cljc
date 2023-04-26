@@ -29,7 +29,8 @@
 
 (mx/defn topo-sort-system :- s/VectorSystemSpec
   "given a system-spec returns the system-spec
-   topo-sorted by ref dependencies - no deps first"
+   topo-sorted by ref dependencies - objects
+   with no deps first"
   [sys-spec :- s/SystemSpec]
 
   (let [sys-spec (into
@@ -106,8 +107,9 @@
  start-object-interceptor)
 
 (mx/defn start-interceptor-chain :- ic.schema/InterceptorContext
-  "return an [[a-frame.interceptor-chain.schema/InterceptorContext]]
-   for starting a system"
+  "return an
+   [InterceptorContext](https://cljdoc.org/d/com.github.yapsterapp/a-frame/CURRENT/api/a-frame.interceptor-chain.schema#InterceptorContext)
+   interceptor chain description, for starting a system"
   [sys :- s/VectorSystemSpec]
   (let [interceptors (for [object-spec sys]
                        {::ic/key ::start
@@ -168,8 +170,9 @@
  stop-object-interceptor)
 
 (mx/defn stop-interceptor-chain :- ic.schema/InterceptorContext
-  "return an [[a-frame.interceptor-chain.schema/InterceptorContext]]
-   for stopping a system"
+  "return an
+   [InterceptorContext](https://cljdoc.org/d/com.github.yapsterapp/a-frame/CURRENT/api/a-frame.interceptor-chain.schema#InterceptorContext)
+   interceptor chain description, for stopping a system"
   [sys-spec :- s/VectorSystemSpec]
   (let [interceptors (for [object-spec sys-spec]
                        {::ic/key ::stop
