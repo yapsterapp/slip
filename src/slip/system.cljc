@@ -73,7 +73,7 @@
          d :slip/data
          :as _object-spec}]
 
-     (debug "start"
+     (debug "start:"
             {:slip/key k
              :slip/factory (or fk k)
              :slip/data d})
@@ -93,7 +93,7 @@
 
            org-err (ic/unwrap-original-error err)]
 
-       (warn "error starting: unwinding"
+       (warn "start error: unwinding"
              {:slip/object-spec object-spec
               :slip/error-message (ex-message org-err)
               :slip/error-data (ex-data org-err)})
@@ -126,7 +126,7 @@
          :as object-spec}]
 
      (p/let [obj (get-in ctx [:slip/system k])
-             _ (debug "stop"
+             _ (debug "stop:"
                       {:slip/key k
                        :slip/factory (or fk k)
                        :slip/data d
@@ -154,7 +154,7 @@
            org-err (ic/unwrap-original-error err)]
 
        (warn
-        "error stopping"
+        "stop error:"
         {:slip/object-spec object-spec
          :slip/error-message (ex-message org-err)
          :slip/error-data (ex-data org-err)})
