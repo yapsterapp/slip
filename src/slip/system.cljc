@@ -8,7 +8,8 @@
    [slip.data.ref-path :as ref-path]
    [slip.data.refs :as refs]
    [slip.schema :as s]
-   [slip.multimethods :as mm]))
+   [slip.multimethods :as mm]
+   [taoensso.timbre :refer [debug info warn]]))
 
 (defn ^:private normalise-obj-spec
   "normalize to a KeyedObjectSpec with
@@ -72,7 +73,10 @@
          d :slip/data
          :as _object-spec}]
 
-     ;; (prn "start" _object-spec ctx)
+     (debug "start"
+            {:slip/key k
+             :slip/factory (or fk k)
+             :slip/data d})
 
      (p/let [obj (mm/start (or fk k) d)]
        (assoc-in ctx [:slip/system k] obj)))
@@ -85,9 +89,14 @@
              _fk :slip/factory
              _d :slip/data
              :as object-spec} ::ic/enter-data
-            :as _start-int-spec} (peek stack)]
+            :as _start-int-spec} (peek stack)
 
-       (prn "unwinding" object-spec (type err))
+           org-err (ic/unwrap-original-error err)]
+
+       (warn "error starting: unwinding"
+             {:slip/object-spec object-spec
+              :slip/error-message (ex-message org-err)
+              :slip/error-data (ex-data org-err)})
 
        ;; continue unwinding
        (throw (ic/rethrow err))))})
@@ -114,22 +123,45 @@
         {k :slip/key
          fk :slip/factory
          d :slip/data
-         :as _object-spec}]
+         :as object-spec}]
+
      (p/let [obj (get-in ctx [:slip/system k])
+             _ (debug "stop"
+                      {:slip/key k
+                       :slip/factory (or fk k)
+                       :slip/data d
+                       :slip/object obj})
              _ (mm/stop (or fk k) d obj)]
+
+       (when (nil? obj)
+         (throw
+          (ex-info "no object to stop in system"
+                   {:slip/object-spec object-spec
+                    :slip/system (get ctx :slip/system)})))
+
        (update-in ctx [:slip/system] dissoc k)))
 
    ::ic/error
    (fn [{stack ::ic/stack
-         :as _ctx}
+         :as ctx}
         err]
      (let [{{_k :slip/key
              _fk :slip/factory
              _d :slip/data
-             :as object-spec} ::ic/enter-data
-            :as _start-int-spec} (peek stack)]
+             :as object-spec} ::ic/leave-data
+            :as _start-int-spec} (peek stack)
 
-       (prn "error stopping" object-spec err)))})
+           org-err (ic/unwrap-original-error err)]
+
+       (warn
+        "error stopping"
+        {:slip/object-spec object-spec
+         :slip/error-message (ex-message org-err)
+         :slip/error-data (ex-data org-err)})
+
+       ;; do not remove the failed stop object from the system
+       ;; so it's available for inspection
+       ctx))})
 
 (ic/register-interceptor
  ::stop
