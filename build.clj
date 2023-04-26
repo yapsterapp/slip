@@ -6,7 +6,7 @@
 
 (def lib 'com.github.yapsterapp/slip)
 (def web-url "https://github.com/yapsterapp/slip")
-(def scm-url "git@github.com/yapsterapp/slip.git")
+(def scm-url "git@github.com:yapsterapp/slip.git")
 (def version (format "0.0.%s" (b/git-count-revs nil)))
 
 (defn sha
