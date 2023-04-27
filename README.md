@@ -8,9 +8,9 @@ A bit like [clip](https://github.com/juxt/clip)'s degenerate one-trick cousin.
 
 slip is a Clojure+Script IOC micro-library which builds a system of objects.
 It transforms a pure-data system specification into a pure-data [interceptor-chain](https://github.com/yapsterapp/a-frame/blob/trunk/src/a_frame/interceptor_chain.cljc)
-description and then runs an asynchronous interceptor-chain to create a system 
+description and then runs an asynchronous interceptor-chain to create a system
 map.
-Errors during construction of the system map cause the operation to be 
+Errors during construction of the system map cause the operation to be
 unwound gracefully, avoiding leaving any objects in unknown states.
 
 ## why?
@@ -37,7 +37,7 @@ by a
 [Malli schema](https://github.com/yapsterapp/slip/blob/trunk/src/slip/schema.cljc).
 
 A `SystemSpec` is a collection of `ObjectSpec`s. An `ObjectSpec` describes
-how to create and destroy an individual object in a system map. 
+how to create and destroy an individual object in a system map.
 Each `ObjectSpec` provides:
 
 - `:slip/key` - the `<object-key>` - a keyword key for the object in the
@@ -74,7 +74,7 @@ Objects in a system map are created and destroyed by the factory lifecycle
 methods. There are two lifecycle methods, `start` and `stop`, and method
 dispatch is on an `ObjectSpec`s `<factory-key>`
 (which defaults to the `<object-key>`). The lifecycle method implementations
-should either return constructed objects directly, or return a promise of 
+should either return constructed objects directly, or return a promise of
 the constructed object.
 
 For a given `<factory-key>`, a `start` method is
@@ -89,12 +89,12 @@ The lifecycle method signatures are:
 ```
 
 and an application should provide implementations of these methods for each type
-of object to be managed. 
+of object to be managed.
 
 ### lifecycle method data and system refs
 
 The `<data>` parameter for lifecycle methods is built according
-to the `:slip/data` 
+to the `:slip/data`
 [`DataSpec`](https://github.com/yapsterapp/slip/blob/trunk/src/slip/schema.cljc)
 template from an `ObjectSpec`.
 
@@ -118,26 +118,33 @@ for the reference then using a `#slip/ref?` will not cause an error.
 (require '[slip.multimethods :as mm])
 (require '[slip.core :as slip])
 
-(def sys
- {:foo {:slip/data #slip/ref [:config :foo]}
+(def sys-spec
+ {:config {:slip/data {:foo 100 :bar 200}}
+  :foo {:slip/data #slip/ref [:config :foo]}
   :bar {:slip/factory :barfac
         :slip/data {:f #slip/ref :foo
                     :cfg #slip/ref [:config :bar]}}})
 
+(defmethod mm/start :config
+  [k d]
+  d)
+
 (defmethod mm/start :foo
   [k d]
-  (p/delay 100 d))
+  (p/delay 0 d))
 
 (defmethod mm/start :barfac
   [k {f :f
       cfg :cfg
       :as d}]
   (p/delay
-    100
+    0
     {:foo f
      :bar-cfg cfg}))
 
-(def app @(slip/start sys {:config {:foo 100 :bar 200}}))
+(def sys (slip/init sys-spec))
+
+(def app @(slip/start! sys))
 
 app ;; => {:config {:foo 100, :bar 200},
     ;;     :foo 100,
@@ -213,7 +220,7 @@ the example above - each log entry has:
   :a-frame.interceptor-chain/success]]
 ```
 
-Should there be an error during system construction you won't get 
-the system map back directly - instead you will get an errored 
-promise, with `ex-data` with a `::context` key - which will contain 
+Should there be an error during system construction you won't get
+the system map back directly - instead you will get an errored
+promise, with `ex-data` with a `::context` key - which will contain
 the interceptor chain context, which has the log.

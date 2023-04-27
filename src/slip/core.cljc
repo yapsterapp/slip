@@ -6,7 +6,7 @@
 
 (defn init
   "initialise a system - given a sys-spec return an initialised
-   but not started system map, with `::start` and `::stop` keys
+   but not started system map, with `:slip/start` and `:slip/stop` keys
    for the interceptor chain descriptions"
   [sys-spec]
   (let [sorted-sys-spec (system/topo-sort-system sys-spec)
@@ -15,8 +15,8 @@
         stop-intc (system/stop-interceptor-chain sorted-sys-spec)]
 
     (-> {}
-        (assoc ::start start-intc)
-        (assoc ::stop stop-intc))))
+        (assoc :slip/start start-intc)
+        (assoc :slip/stop stop-intc))))
 
 (defn start!
   "start a system
@@ -26,15 +26,15 @@
 
    returns the started system"
   ([sys] (start! sys nil))
-  ([{start-intc ::start
-     stop-intc ::stop
+  ([{start-intc :slip/start
+     stop-intc :slip/stop
      :as sys}
     {:keys [:slip/debug?]}]
 
    (when (or (nil? start-intc)
              (nil? stop-intc))
      (throw
-      (ex-info "system must have ::start and ::stop chains"
+      (ex-info "system must have :slip/start and :slip/stop chains"
                {:system sys})))
 
    (p/let [start-intc+sys (assoc start-intc :slip/system {})
@@ -46,8 +46,8 @@
      ;; add the start and stop chains and an optional
      ;; debug log to the system
      (cond-> sys
-       true (assoc ::start start-intc)
-       true (assoc ::stop stop-intc)
+       true (assoc :slip/start start-intc)
+       true (assoc :slip/stop stop-intc)
        debug? (assoc :slip/log history)))))
 
 (defn stop!
@@ -59,20 +59,20 @@
    returns the stopped system - unless errors happened, it should be
      equivalent to a freshly `init`ed system"
   ([sys] (stop! sys nil))
-  ([{start-intc ::start
-     stop-intc ::stop
+  ([{start-intc :slip/start
+     stop-intc :slip/stop
      :as sys}
     {:keys [:slip/debug?]}]
 
    (when (or (nil? start-intc)
              (nil? stop-intc))
      (throw
-      (ex-info "system must have ::start and ::stop chains"
+      (ex-info "system must have :slip/start and :slip/stop chains"
                {:system sys})))
 
    (p/let [stop-intc+sys (assoc stop-intc
                                 :slip/system
-                                (dissoc sys ::start ::stop :slip/log))
+                                (dissoc sys :slip/start :slip/stop :slip/log))
 
            {history ::ic/history
             :as r} (ic/execute* stop-intc+sys)
@@ -80,6 +80,6 @@
            out-sys (get-in r [:slip/system])]
 
      (cond-> out-sys
-       true (assoc ::start start-intc)
-       true (assoc ::stop stop-intc)
+       true (assoc :slip/start start-intc)
+       true (assoc :slip/stop stop-intc)
        debug? (assoc :slip/log history)))))
