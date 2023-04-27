@@ -1,6 +1,6 @@
 {:paths ["src"]
- :deps {com.github.yapsterapp/a-frame {:mvn/version "3.0.36-alpha1"}
-
+ :deps {org.clojure/tools.namespace {:mvn/version "1.4.4"}
+        com.github.yapsterapp/a-frame {:mvn/version "3.0.36-alpha1"}
         metosin/malli {:mvn/version "0.10.0"}}
 
  :aliases
