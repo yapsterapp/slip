@@ -4,6 +4,7 @@
    [promesa.core :as p]
    [a-frame.interceptor-chain :as ic]
    [a-frame.interceptor-chain.schema :as ic.schema]
+   [a-frame.interceptor-chain.data :as ic.data]
    [slip.kahn :as kahn]
    [slip.data.ref-path :as ref-path]
    [slip.data.refs :as refs]
@@ -69,27 +70,33 @@
   {::ic/name ::start
    ::ic/enter
    (fn [{:as ctx}
-        {k :slip/key
-         fk :slip/factory
-         d :slip/data
-         :as _object-spec}]
+        {{k :slip/key
+          fk :slip/factory
+          data-spec :slip/data
+          :as _object-spec} ::object
+         :as _interceptor-spec}]
 
-     (debug "start:"
-            {:slip/key k
-             :slip/factory (or fk k)
-             :slip/data d})
+     (let [arg (ic.data/resolve-data data-spec ctx)]
 
-     (p/let [obj (mm/start (or fk k) d)]
-       (assoc-in ctx [:slip/system k] obj)))
+       (debug "start:"
+              _object-spec
+              {:slip/key k
+               :slip/factory (or fk k)
+               :slip/data data-spec
+               :slip/resolved-data arg})
+
+       (p/let [obj (mm/start (or fk k) arg)]
+         (assoc-in ctx [:slip/system k] obj))))
 
    ::ic/error
    (fn [{stack ::ic/stack
          :as _ctx}
+        _object-spec
         err]
      (let [{{_k :slip/key
              _fk :slip/factory
              _d :slip/data
-             :as object-spec} ::ic/enter-data
+             :as object-spec} ::object
             :as _start-int-spec} (peek stack)
 
            org-err (ic/unwrap-original-error err)]
@@ -113,7 +120,7 @@
   [sys :- s/VectorSystemSpec]
   (let [interceptors (for [object-spec sys]
                        {::ic/key ::start
-                        ::ic/enter-data object-spec})]
+                        ::object object-spec})]
     (ic/initiate* interceptors)))
 
 (def stop-object-interceptor
@@ -122,18 +129,21 @@
 
    ::ic/leave
    (fn [{:as ctx}
-        {k :slip/key
-         fk :slip/factory
-         d :slip/data
-         :as object-spec}]
+        {{k :slip/key
+          fk :slip/factory
+          data-spec :slip/data
+          :as object-spec} ::object
+         :as _interceptor-spec}]
 
      (p/let [obj (get-in ctx [:slip/system k])
+             data (ic.data/resolve-data data-spec ctx)
              _ (debug "stop:"
                       {:slip/key k
                        :slip/factory (or fk k)
-                       :slip/data d
+                       :slip/data data-spec
+                       :slip/resolved-data data
                        :slip/object obj})
-             _ (mm/stop (or fk k) d obj)]
+             _ (mm/stop (or fk k) data obj)]
 
        (when (nil? obj)
          (throw
@@ -146,11 +156,12 @@
    ::ic/error
    (fn [{stack ::ic/stack
          :as ctx}
+        _object-spec
         err]
      (let [{{_k :slip/key
              _fk :slip/factory
              _d :slip/data
-             :as object-spec} ::ic/leave-data
+             :as object-spec} ::object
             :as _start-int-spec} (peek stack)
 
            org-err (ic/unwrap-original-error err)]
@@ -176,5 +187,5 @@
   [sys-spec :- s/VectorSystemSpec]
   (let [interceptors (for [object-spec sys-spec]
                        {::ic/key ::stop
-                        ::ic/leave-data object-spec})]
+                        ::object object-spec})]
     (ic/initiate* interceptors)))
