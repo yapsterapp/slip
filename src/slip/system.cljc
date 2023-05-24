@@ -76,16 +76,16 @@
           :as _object-spec} ::object
          :as _interceptor-spec}]
 
-     (let [arg (ic.data/resolve-data data-spec ctx)]
+     (let [resolved-data (ic.data/resolve-data data-spec ctx)]
 
        (debug "start:"
               _object-spec
               {:slip/key k
                :slip/factory (or fk k)
                :slip/data data-spec
-               :slip/resolved-data arg})
+               :slip/resolved-data resolved-data})
 
-       (p/let [obj (mm/start (or fk k) arg)]
+       (p/let [obj (mm/start (or fk k) resolved-data)]
          (assoc-in ctx [:slip/system k] obj))))
 
    ::ic/error
@@ -136,14 +136,14 @@
          :as _interceptor-spec}]
 
      (p/let [obj (get-in ctx [:slip/system k])
-             data (ic.data/resolve-data data-spec ctx)
+             resolved-data (ic.data/resolve-data data-spec ctx)
              _ (debug "stop:"
                       {:slip/key k
                        :slip/factory (or fk k)
                        :slip/data data-spec
-                       :slip/resolved-data data
+                       :slip/resolved-data resolved-data
                        :slip/object obj})
-             _ (mm/stop (or fk k) data obj)]
+             _ (mm/stop (or fk k) resolved-data obj)]
 
        (when (nil? obj)
          (throw
