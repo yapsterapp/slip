@@ -37,18 +37,21 @@
       (ex-info "system must have :slip/start and :slip/stop chains"
                {:system sys})))
 
-   (p/let [start-intc+sys (assoc start-intc :slip/system {})
-           {history ::ic/history
-            :as r} (ic/execute* start-intc+sys)
+   (if (= 2 (count (keys sys)))
+     (p/let [start-intc+sys (assoc start-intc :slip/system {})
+             {history ::ic/history
+              :as r} (ic/execute* start-intc+sys)
 
-           sys (get-in r [:slip/system])]
+             sys (get-in r [:slip/system])]
 
-     ;; add the start and stop chains and an optional
-     ;; debug log to the system
-     (cond-> sys
-       true (assoc :slip/start start-intc)
-       true (assoc :slip/stop stop-intc)
-       debug? (assoc :slip/log history)))))
+       ;; add the start and stop chains and an optional
+       ;; debug log to the system
+       (cond-> sys
+         true (assoc :slip/start start-intc)
+         true (assoc :slip/stop stop-intc)
+         debug? (assoc :slip/log history)))
+
+     (p/resolved sys))))
 
 (defn stop!
   "stop a system
@@ -61,6 +64,7 @@
   ([sys] (stop! sys nil))
   ([{start-intc :slip/start
      stop-intc :slip/stop
+     _running-system :slip/system
      :as sys}
     {:keys [:slip/debug?]}]
 
@@ -70,16 +74,19 @@
       (ex-info "system must have :slip/start and :slip/stop chains"
                {:system sys})))
 
-   (p/let [stop-intc+sys (assoc stop-intc
-                                :slip/system
-                                (dissoc sys :slip/start :slip/stop :slip/log))
+   (if (> (count (keys sys)) 2)
+     (p/let [stop-intc+sys (assoc stop-intc
+                                  :slip/system
+                                  (dissoc sys :slip/start :slip/stop :slip/log))
 
-           {history ::ic/history
-            :as r} (ic/execute* stop-intc+sys)
+             {history ::ic/history
+              :as r} (ic/execute* stop-intc+sys)
 
-           out-sys (get-in r [:slip/system])]
+             out-sys (get-in r [:slip/system])]
 
-     (cond-> out-sys
-       true (assoc :slip/start start-intc)
-       true (assoc :slip/stop stop-intc)
-       debug? (assoc :slip/log history)))))
+       (cond-> out-sys
+         true (assoc :slip/start start-intc)
+         true (assoc :slip/stop stop-intc)
+         debug? (assoc :slip/log history)))
+
+     (p/resolved sys))))
