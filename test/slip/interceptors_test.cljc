@@ -1,10 +1,10 @@
-(ns slip.system-test
+(ns slip.interceptors-test
   (:require
    [promesa.core :as p]
    [promisespromises.test :refer [deftest is testing]]
    [a-frame.interceptor-chain :as intc]
    [slip.multimethods :as slip.mm]
-   [slip.system :as sut]))
+   [slip.interceptors :as sut]))
 
 (defmethod slip.mm/start :foofoo
   [k d]
