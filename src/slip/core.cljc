@@ -17,3 +17,8 @@
   "stop a system"
   ([sys] (system/stop! sys))
   ([sys opts] (system/stop! sys opts)))
+
+(defn reinit!
+  "re-initialise an errored system. does nothing if the system
+   is not errored"
+  [sys] (system/reinit! sys))
