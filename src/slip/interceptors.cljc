@@ -3,6 +3,7 @@
    [malli.experimental :as mx]
    [promesa.core :as p]
    [a-frame.interceptor-chain :as ic]
+   [a-frame.std-interceptors :as std-interceptors]
    [a-frame.interceptor-chain.schema :as ic.schema]
    [a-frame.interceptor-chain.data :as ic.data]
    [slip.kahn :as kahn]
@@ -121,7 +122,10 @@
   (let [interceptors (for [object-spec sys]
                        {::ic/key ::start
                         ::object object-spec})]
-    (ic/initiate* interceptors)))
+    (ic/initiate*
+     (into
+      [::std-interceptors/unhandled-error-report]
+      interceptors))))
 
 (def stop-object-interceptor
   "an interceptor to stop an object"
@@ -188,4 +192,7 @@
   (let [interceptors (for [object-spec sys-spec]
                        {::ic/key ::stop
                         ::object object-spec})]
-    (ic/initiate* interceptors)))
+    (ic/initiate*
+     (into
+      [::std-interceptors/unhandled-error-report]
+      interceptors))))
