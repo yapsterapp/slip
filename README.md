@@ -142,7 +142,7 @@ for the reference then using a `#slip/ref?` will not cause an error.
     {:foo f
      :bar-cfg cfg}))
 
-(def sys (slip/init sys-spec))
+(slip/defsys sys sys-spec)
 
 (def app @(slip/start! sys))
 
