@@ -42,7 +42,7 @@
 
         (defn ~sys-reload-sym
           []
-          ;; yes. we're really derefing the promise. otherwise
+          ;; yes. we're really derefing the promise. if we chain
           ;; c.t.n.r/refresh borks because of an `in-ns` on
           ;; a promesa thread
           (let [_# @(system/stop! ~sys-sym)]
