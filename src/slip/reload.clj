@@ -26,7 +26,7 @@
          sys-reload-sym (symbol (str (join-name "reload" base-name) "!"))
          sys-label (str *ns* "/" (name sys-sym))]
      `(do
-        (defonce ~sys-sym
+        (def ~sys-sym
           (system/slip-system ~sys-label ~system-spec))
 
         (defn ~sys-start-sym
@@ -43,7 +43,8 @@
 
         (defn ~sys-reload-sym
           []
-          (p/chain
-           (system/stop! ~sys-sym)
-           (fn [_#]
-             (refresh :after (quote ~reload-after-sym)))))))))
+          ;; yes. we're really derefing the promise. otherwise
+          ;; c.t.n.r/refresh borks because of an `in-ns` on
+          ;; a promesa thread
+          (let [_# @(system/stop! ~sys-sym)]
+            (refresh :after (quote ~reload-after-sym))))))))
