@@ -5,7 +5,6 @@
   (:require
    [clojure.string :as string]
    [clojure.tools.namespace.repl :refer [refresh]]
-   [promesa.core :as p]
    [slip.system :as system]))
 
 (defn ^:private join-name
