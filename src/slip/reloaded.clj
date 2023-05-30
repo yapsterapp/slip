@@ -1,10 +1,11 @@
-(ns slip.reload
+(ns slip.reloaded
   "some slightly awkward clj-only macros to def a system
    and associated fns including a c.t.n.r/refresh-based
    reload! operation"
   (:require
    [clojure.string :as string]
    [clojure.tools.namespace.repl :refer [refresh]]
+   [slip.core]
    [slip.system :as system]))
 
 (defn ^:private join-name
