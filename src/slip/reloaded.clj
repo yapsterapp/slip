@@ -1,5 +1,7 @@
 (ns slip.reloaded
-  "some slightly awkward clj-only macros to def a system
+  "reloaded workflow support
+
+   some slightly awkward clj-only macros to def a system
    and associated fns including a c.t.n.r/refresh-based
    reload! operation"
   (:require
