@@ -18,7 +18,10 @@
 
        ;; if we eval the path then we can use var symbols
        ;; in the path - obvs only works on clj
-       (ref-path (eval path)))))
+       ;;
+       ;; resolving the var avoids stale record issues after
+       ;; c.t.n.r/refresh
+       ((resolve 'slip.data.ref-path/ref-path) (eval path)))))
 
 #?(:cljs
    (defn ^:export read-ref-path
@@ -33,7 +36,10 @@
 
        ;; if we eval the path then we can use var symbols
        ;; in the path - obvs only works on clj
-       (maybe-ref-path (eval path)))))
+       ;;
+       ;; resolving the var avoids stale record issues after
+       ;; c.t.n.r/refresh
+       ((resolve 'slip.data.ref-path/maybe-ref-path) (eval path)))))
 
 #?(:cljs
    (defn ^:export read-maybe-ref-path
