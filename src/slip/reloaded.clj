@@ -8,8 +8,7 @@
    [clojure.string :as string]
    [clojure.tools.namespace.repl :refer [refresh]]
    [promesa.core :as p]
-   [slip.core :as core]
-   [slip.system :as system]))
+   [slip.core :as core]))
 
 (defn ^:private join-name
   [& ss]
@@ -25,6 +24,9 @@
   ([nm system-spec]
    (let [base-name (some-> nm name)
          sys-sym (symbol (join-name "sys" base-name))
+         spec-sym (symbol (join-name "spec" base-name))
+         reset-spec-sym (symbol (str (join-name "reset-spec" base-name) "!"))
+         system-map-sym (symbol (join-name "system-map" base-name))
          sys-start-sym (symbol (str (join-name "start" base-name) "!"))
          reload-after-sym (symbol (str *ns*) (str (join-name "start" base-name) "!"))
          sys-stop-sym (symbol (str (join-name "stop" base-name) "!"))
@@ -33,17 +35,29 @@
      `(do
         (core/defsys ~sys-sym ~system-spec)
 
+        (defn ~spec-sym
+          []
+          (core/spec ~sys-sym))
+
+        (defn ~reset-spec-sym
+          [system-spec#]
+          (core/reset-spec! ~sys-sym system-spec#))
+
+        (defn ~system-map-sym
+          []
+          (core/system-map ~sys-sym))
+
         (defn ~sys-start-sym
           []
-          (system/start! ~sys-sym))
+          (core/start! ~sys-sym))
 
         (defn ~sys-stop-sym
           []
-          (system/stop! ~sys-sym))
+          (core/stop! ~sys-sym))
 
         (defn ~sys-reinit-sym
           []
-          (system/reinit! ~sys-sym))
+          (core/reinit! ~sys-sym))
 
         (defn ~sys-reload-sym
           []
@@ -51,13 +65,13 @@
           ;; c.t.n.r/refresh borks because of an `in-ns` on
           ;; a promesa thread
           (let [_# @(p/let [_# (p/handle
-                                (system/stop! ~sys-sym)
+                                (core/stop! ~sys-sym)
                                 (fn [succ# err#]
                                   (if (some? err#)
                                     [:error err#]
                                     [:success succ#])))]
 
                       ;; reinit! in case of errors
-                      (system/reinit! ~sys-sym))]
+                      (core/reinit! ~sys-sym))]
 
             (refresh :after (quote ~reload-after-sym))))))))

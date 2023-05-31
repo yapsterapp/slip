@@ -4,6 +4,14 @@
    [a-frame.interceptor-chain :as ic]
    [slip.interceptors :as interceptors]))
 
+(def impl-keys
+  "implementation keys added to the system-map"
+  #{:slip/start :slip/stop})
+
+(defn dissoc-impl-keys
+  [system-map]
+  (apply dissoc system-map impl-keys))
+
 (defn init
   "initialise a system - given a sys-spec return an initialised
    but not started system map, with `:slip/start` and `:slip/stop` keys

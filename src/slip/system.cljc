@@ -7,6 +7,7 @@
    update in multi-threaded scenarios"
   (:require
    [promesa.core :as p]
+   [taoensso.timbre :refer [error]]
    [slip.protocols :as pt]
    [slip.system-map :as system-map]))
 
@@ -16,6 +17,9 @@
 
   (-reset-spec! [_ system-spec]
     (reset! system-spec-a system-spec))
+
+  (-system-map [_]
+    @system-map-p-container)
 
   (-start! [_ opts resolve-fn reject-fn]
     (#?(:clj send :cljs swap!)
@@ -32,7 +36,8 @@
           (fn [succ err]
             (if (some? err)
               (reject-fn err)
-              (resolve-fn succ))))
+              (resolve-fn
+               (system-map/dissoc-impl-keys succ)))))
 
          ;; update the container value
          started-system-map-p))))
@@ -47,7 +52,9 @@
                                    #(system-map/stop! % opts))
 
              ;; if the system stopped cleanly, then
-             ;; reinitialise it with potentially updated spec
+             ;; reinitialise it with the potentially updated spec.
+             ;; if there was an error, keep it - reinit! will be
+             ;; required
              maybe-new-system-map-p (p/handle
                                      stopped-system-map-p
                                      (fn [_succ err]
@@ -55,13 +62,14 @@
                                          (p/rejected err)
                                          (system-map/init @system-spec-a))))]
 
-         ;; return a result to the caller
+         ;; then return the result of stop! to the caller
          (p/handle
           stopped-system-map-p
           (fn [succ err]
             (if (some? err)
               (reject-fn err)
-              (resolve-fn succ))))
+              (resolve-fn
+               (system-map/dissoc-impl-keys succ)))))
 
          ;; update the container value
          maybe-new-system-map-p))))
@@ -71,10 +79,19 @@
      system-map-p-container
      (fn [system-map-p]
 
-       (let [next-system-map-p (p/handle
-                                system-map-p
-                                (fn [_system-map _err]
-                                  (system-map/init @system-spec-a)))]
+       (let [next-system-map-p (-> system-map-p
+                                   (p/handle
+                                    ;; first stop the system if running
+                                    (fn [succ err]
+                                      (if (some? err)
+                                        (p/rejected err)
+                                        (system-map/stop! succ))))
+                                   ;; catch any errors and ignore before reinit
+                                   (p/handle
+                                    (fn [_system-map err]
+                                      (when (some? err)
+                                        (error err "ignoring previous error"))
+                                      (system-map/init @system-spec-a))))]
 
          ;; return result to the caller
          (p/handle
@@ -82,7 +99,8 @@
           (fn [succ err]
             (if (some? err)
               (reject-fn err)
-              (resolve-fn succ))))
+              (resolve-fn
+               (system-map/dissoc-impl-keys succ)))))
 
          ;; update the container value
          next-system-map-p)))))
@@ -98,33 +116,3 @@
     #?(:clj (agent (p/resolved (system-map/init system-spec)))
        :cljs (atom (p/resolved (system-map/init system-spec))))}))
 
-(defn spec
-  [sys]
-  (pt/-spec sys))
-
-(defn reset-spec!
-  [sys system-spec]
-  (pt/-reset-spec! sys system-spec))
-
-(defn start!
-  "start a system. idempotent - does nothing if the system is already started"
-  ([sys] (start! sys nil))
-  ([sys opts]
-   (p/create
-    (fn [resolve-fn reject-fn]
-      (pt/-start! sys opts resolve-fn reject-fn)))))
-
-(defn stop!
-  "stop a system. idempotent - does nothing if the system is already stopped"
-  ([sys] (stop! sys nil))
-  ([sys opts]
-   (p/create
-    (fn [resolve-fn reject-fn]
-      (pt/-stop! sys opts resolve-fn reject-fn)))))
-
-(defn reinit!
-  "re-initialise an errored system. does nothing if the system is not errored"
-  [sys]
-  (p/create
-   (fn [resolve-fn reject-fn]
-     (pt/-reinit! sys resolve-fn reject-fn))))
