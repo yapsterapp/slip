@@ -87,7 +87,8 @@
                :slip/resolved-data resolved-data})
 
        (p/let [obj (mm/start (or fk k) resolved-data)]
-         (assoc-in ctx [:slip/system k] obj))))
+         [(assoc-in ctx [:slip/system k] obj)
+          resolved-data])))
 
    ::ic/error
    (fn [{stack ::ic/stack
