@@ -152,6 +152,52 @@ app ;; => {:config {:foo 100, :bar 200},
 
 ```
 
+## Reloaded workflow
+
+Slip supports a reloaded workflow with the `slip.reloaded` namespace (for
+Clojure only). The `defsys-fns` macro defs a system and some 0-args
+versions of `start!`, `stop!`, `reinit!` and the other `slip.core` fns -
+and adds a `reload!` fn which does a `stop!`, `c.t.n.r/refresh` and
+`start!` of the system.
+
+Thus, after a bunch of code changes, a call to `@(reload!)` will load the
+new code and restart the system.
+
+``` clojure
+(ns slip.sample
+  (:require
+    [slip.multimethods :as slip.mm]
+    [slip.reloaded :refer [defsys-fns]]))
+
+(defmethod mm/start :config
+  [k d]
+  d)
+
+(defmethod mm/start :foo
+  [k d]
+  (p/delay 0 d))
+
+(def sys-spec
+ {:config {:slip/data {:foo 100 :bar 200}}
+  :foo {:slip/data #slip/ref [:config :foo]}})
+
+(defsys-fns sys-spec)
+```
+
+in the REPL:
+
+``` clojure
+(in-ns 'slip.sample')
+
+@(start!)
+;; => {:config {:foo 100, :bar 200}, :foo 100}
+
+;; does a (stop!), a c.t.n.r/refresh followed by a (start!)
+@(reload!)
+;; => {:config {:foo 100, :bar 200}, :foo 100}
+
+```
+
 ## ClojureScript
 
 It's common for JavaScript object factories to return a Promise of their result.
