@@ -3,10 +3,14 @@
    [slip.system :as system]))
 
 (defmacro defsys
-  "def a system at the given var"
+  "defonce a system at the given var"
   [nm system-spec]
   (let [sys-name (str *ns* "/" (name nm))]
-    `(def ~nm (system/slip-system ~sys-name ~system-spec))))
+    `(do
+       (defonce ~nm (system/slip-system ~sys-name ~system-spec))
+
+       ;; update the spec in an existing defonce
+       (system/reset-spec! ~nm ~system-spec))))
 
 (defn start!
   "start a system"

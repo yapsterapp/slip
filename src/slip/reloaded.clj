@@ -7,7 +7,8 @@
   (:require
    [clojure.string :as string]
    [clojure.tools.namespace.repl :refer [refresh]]
-   [slip.core]
+   [promesa.core :as p]
+   [slip.core :as core]
    [slip.system :as system]))
 
 (defn ^:private join-name
@@ -17,6 +18,9 @@
        (string/join "-")))
 
 (defmacro defsys-fns
+  "defs a system `sys` and `start!`, `stop!`, `reinit!` and `reload!` fns
+
+   - `nm` - def `sys-<nm>`, `start-<nm>!` &c instead"
   ([system-spec] `(defsys-fns nil ~system-spec))
   ([nm system-spec]
    (let [base-name (some-> nm name)
@@ -25,11 +29,9 @@
          reload-after-sym (symbol (str *ns*) (str (join-name "start" base-name) "!"))
          sys-stop-sym (symbol (str (join-name "stop" base-name) "!"))
          sys-reinit-sym (symbol (str (join-name "reinit" base-name) "!"))
-         sys-reload-sym (symbol (str (join-name "reload" base-name) "!"))
-         sys-label (str *ns* "/" (name sys-sym))]
+         sys-reload-sym (symbol (str (join-name "reload" base-name) "!"))]
      `(do
-        (def ~sys-sym
-          (system/slip-system ~sys-label ~system-spec))
+        (core/defsys ~sys-sym ~system-spec)
 
         (defn ~sys-start-sym
           []
@@ -48,5 +50,14 @@
           ;; yes. we're really derefing the promise. if we chain
           ;; c.t.n.r/refresh borks because of an `in-ns` on
           ;; a promesa thread
-          (let [_# @(system/stop! ~sys-sym)]
+          (let [_# @(p/let [_# (p/handle
+                                (system/stop! ~sys-sym)
+                                (fn [succ# err#]
+                                  (if (some? err#)
+                                    [:error err#]
+                                    [:success succ#])))]
+
+                      ;; reinit! in case of errors
+                      (system/reinit! ~sys-sym))]
+
             (refresh :after (quote ~reload-after-sym))))))))
