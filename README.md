@@ -211,59 +211,73 @@ You can see exactly what happened during construction of your system by
 providing a`:slip/debug?` option to `start`
 
 ``` clojure
-(def app @(slip/start
-           sys
-           {:config {:foo 100 :bar 200}}
-           {:slip/debug? true}))
+@(slip/start! sys {:slip/debug? true})
 ```
 
 your system will get a `:slip/log` key with a detailed breakdown of the
-interceptor fns called, with what data and what outcome. Here's the log for
-the example above - each log entry has:
-[`ObjectSpec` `<interceptor-fn>` `<interceptor-action>` `<data>` `<outcome>`]
+interceptor fns called, with what data and what outcome. To see the log
+you will need to access the full system-map ( `start!` removes implementation 
+keys for clairty) - it is acessible with `@(slip/system-map sys)`.
+Here's the log for the first example above - each log entry has:
+[`ObjectSpec` `<interceptor-fn>` `<interceptor-action>` `<data>` `<outcome>`].
+Of particular interest is the `<data>` field which shows resolved data 
+for that object factory.
 
 ``` clojure
-[[#:a-frame.interceptor-chain{:key :slip.system/start,
-                              :enter-data
-                              #:slip{:data #slip/ref [:config :foo],
-                                     :key :foo}}
-  :a-frame.interceptor-chain/enter
-  :a-frame.interceptor-chain/execute
-  #:slip{:data 100, :key :foo}
-  :a-frame.interceptor-chain/success]
-
- [#:a-frame.interceptor-chain{:key :slip.system/start,
-                              :enter-data
-                              #:slip{:factory :barfac,
-                                     :data
-                                     {:f #slip/ref [:foo],
-                                      :cfg #slip/ref [:config :bar]},
-                                     :key :bar}}
-  :a-frame.interceptor-chain/enter
-  :a-frame.interceptor-chain/execute
-  #:slip{:factory :barfac, :data {:f 100, :cfg 200}, :key :bar}
-  :a-frame.interceptor-chain/success]
-
- [#:a-frame.interceptor-chain{:key :slip.system/start,
-                              :enter-data
-                              #:slip{:factory :barfac,
-                                     :data
-                                     {:f #slip/ref [:foo],
-                                      :cfg #slip/ref [:config :bar]},
-                                     :key :bar}}
-  :a-frame.interceptor-chain/leave
-  :a-frame.interceptor-chain/noop
-  :_
-  :a-frame.interceptor-chain/success]
-
- [#:a-frame.interceptor-chain{:key :slip.system/start,
-                              :enter-data
-                              #:slip{:data #slip/ref [:config :foo],
-                                     :key :foo}}
-  :a-frame.interceptor-chain/leave
-  :a-frame.interceptor-chain/noop
-  :_
-  :a-frame.interceptor-chain/success]]
+[[:a-frame.std-interceptors/unhandled-error-report
+   :a-frame.interceptor-chain/enter
+   :a-frame.interceptor-chain/noop
+   :_
+   :a-frame.interceptor-chain/success]
+  [{:a-frame.interceptor-chain/key :slip.interceptors/start,
+    :slip.interceptors/object #:slip{:data {:foo 100, :bar 200}, :key :config}}
+   :a-frame.interceptor-chain/enter
+   :a-frame.interceptor-chain/execute
+   {:foo 100, :bar 200}
+   :a-frame.interceptor-chain/success]
+  [{:a-frame.interceptor-chain/key :slip.interceptors/start,
+    :slip.interceptors/object
+    #:slip{:data #slip/ref [:config :foo], :key :foo}}
+   :a-frame.interceptor-chain/enter
+   :a-frame.interceptor-chain/execute
+   100
+   :a-frame.interceptor-chain/success]
+  [{:a-frame.interceptor-chain/key :slip.interceptors/start,
+    :slip.interceptors/object
+    #:slip{:factory :barfac,
+           :data {:f #slip/ref [:foo], :cfg #slip/ref [:config :bar]},
+           :key :bar}}
+   :a-frame.interceptor-chain/enter
+   :a-frame.interceptor-chain/execute
+   {:f 100, :cfg 200}
+   :a-frame.interceptor-chain/success]
+  [{:a-frame.interceptor-chain/key :slip.interceptors/start,
+    :slip.interceptors/object
+    #:slip{:factory :barfac,
+           :data {:f #slip/ref [:foo], :cfg #slip/ref [:config :bar]},
+           :key :bar}}
+   :a-frame.interceptor-chain/leave
+   :a-frame.interceptor-chain/noop
+   :_
+   :a-frame.interceptor-chain/success]
+  [{:a-frame.interceptor-chain/key :slip.interceptors/start,
+    :slip.interceptors/object
+    #:slip{;; => :data #slip/ref [:config :foo], :key :foo}}
+   :a-frame.interceptor-chain/leave
+   :a-frame.interceptor-chain/noop
+   :_
+   :a-frame.interceptor-chain/success]
+  [{:a-frame.interceptor-chain/key :slip.interceptors/start,
+    :slip.interceptors/object #:slip{:data {:foo 100, :bar 200}, :key :config}}
+   :a-frame.interceptor-chain/leave
+   :a-frame.interceptor-chain/noop
+   :_
+   :a-frame.interceptor-chain/success]
+  [:a-frame.std-interceptors/unhandled-error-report
+   :a-frame.interceptor-chain/leave
+   :a-frame.interceptor-chain/noop
+   :_
+   :a-frame.interceptor-chain/success]]
 ```
 
 Should there be an error during system construction you won't get
