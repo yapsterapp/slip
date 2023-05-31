@@ -6,7 +6,7 @@
 
 (def impl-keys
   "implementation keys added to the system-map"
-  #{:slip/start :slip/stop})
+  #{:slip/start :slip/stop :slip/log})
 
 (defn dissoc-impl-keys
   [system-map]

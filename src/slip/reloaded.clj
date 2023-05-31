@@ -48,12 +48,16 @@
           (core/system-map ~sys-sym))
 
         (defn ~sys-start-sym
-          []
-          (core/start! ~sys-sym))
+          ([]
+           (core/start! ~sys-sym))
+          ([opts#]
+           (core/start! ~sys-sym opts#)))
 
         (defn ~sys-stop-sym
-          []
-          (core/stop! ~sys-sym))
+          ([]
+           (core/stop! ~sys-sym))
+          ([opts#]
+           (core/stop! ~sys-sym opts#)))
 
         (defn ~sys-reinit-sym
           []
