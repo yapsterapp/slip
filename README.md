@@ -146,10 +146,62 @@ for the reference then using a `#slip/ref?` will not cause an error.
 
 (def app @(slip/start! sys))
 
-app ;; => {:config {:foo 100, :bar 200},
-    ;;     :foo 100,
-    ;;     :bar {:foo 100, :bar-cfg 200}}
+app
+;; => {:config {:foo 100, :bar 200}, :foo 100, :bar {:foo 100, :bar-cfg 200}}
 
+;; see the full system-map including the :slip/start and
+;; :slip/stop interceptor-chain definitions
+@(slip/system-map sys)
+
+;; => {:config {:foo 100, :bar 200},
+ :foo 100,
+ :bar {:foo 100, :bar-cfg 200},
+ :slip/start
+ #:a-frame.interceptor-chain{:queue
+                             [:a-frame.std-interceptors/unhandled-error-report
+                              {:a-frame.interceptor-chain/key
+                               :slip.interceptors/start,
+                               :slip.interceptors/object
+                               #:slip{:data {:foo 100, :bar 200},
+                                      :key :config}}
+                              {:a-frame.interceptor-chain/key
+                               :slip.interceptors/start,
+                               :slip.interceptors/object
+                               #:slip{:data #slip/ref [:config :foo],
+                                      :key :foo}}
+                              {:a-frame.interceptor-chain/key
+                               :slip.interceptors/start,
+                               :slip.interceptors/object
+                               #:slip{:factory :barfac,
+                                      :data
+                                      {:f #slip/ref [:foo],
+                                       :cfg #slip/ref [:config :bar]},
+                                      :key :bar}}],
+                             :stack (),
+                             :history []},
+ :slip/stop
+ #:a-frame.interceptor-chain{:queue
+                             [:a-frame.std-interceptors/unhandled-error-report
+                              {:a-frame.interceptor-chain/key
+                               :slip.interceptors/stop,
+                               :slip.interceptors/object
+                               #:slip{:data {:foo 100, :bar 200},
+                                      :key :config}}
+                              {:a-frame.interceptor-chain/key
+                               :slip.interceptors/stop,
+                               :slip.interceptors/object
+                               #:slip{:data #slip/ref [:config :foo],
+                                      :key :foo}}
+                              {:a-frame.interceptor-chain/key
+                               :slip.interceptors/stop,
+                               :slip.interceptors/object
+                               #:slip{:factory :barfac,
+                                      :data
+                                      {:f #slip/ref [:foo],
+                                       :cfg #slip/ref [:config :bar]},
+                                      :key :bar}}],
+                             :stack (),
+                             :history []}}
 ```
 
 ## Reloaded workflow
@@ -216,11 +268,11 @@ providing a`:slip/debug?` option to `start`
 
 your system will get a `:slip/log` key with a detailed breakdown of the
 interceptor fns called, with what data and what outcome. To see the log
-you will need to access the full system-map ( `start!` removes implementation 
+you will need to access the full system-map ( `start!` removes implementation
 keys for clairty) - it is acessible with `@(slip/system-map sys)`.
 Here's the log for the first example above - each log entry has:
 [`ObjectSpec` `<interceptor-fn>` `<interceptor-action>` `<data>` `<outcome>`].
-Of particular interest is the `<data>` field which shows resolved data 
+Of particular interest is the `<data>` field which shows resolved data
 for that object factory.
 
 ``` clojure
