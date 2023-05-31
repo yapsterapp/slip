@@ -4,7 +4,6 @@
    some slightly awkward clj-only macros to def a system
    and associated fns including a c.t.n.r/refresh-based
    reload! operation"
-  {:cljdoc/languages ["clj"]}
   (:require
    [clojure.string :as string]
    [clojure.tools.namespace.repl :refer [refresh]]
