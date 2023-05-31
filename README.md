@@ -203,7 +203,7 @@ in the REPL:
 It's common for JavaScript object factories to return a Promise of their result.
 Slip is fully Promise compatible - the interceptor chain is promise-based and
 any of the lifecycle fns can return a promise of their result, as the above
-example demonstrates.
+examples demonstrate (`:foo` `start` fn returns a Promesa `delay`).
 
 ## debugging
 
